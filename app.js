@@ -16,7 +16,8 @@ const imageDefault=()=>({asset:'',fit:'cover',position:'center',height:180,mobil
 const buttonImageDefault=()=>({asset:'',backgroundAsset:'',backgroundPosition:'center',backgroundShade:35});
 const opening=(title='새 퍼메',body='')=>({id:uid(),title,ko:body,en:'',image:buttonImageDefault()});
 function demo(){return {format:'misel-first-message-project',version:1,name:'야니크 · 선택기 연습',namespace:'fm_jannik',marker:'[ 퍼메 ]',title:'어디서부터 시작할까?',subtitle:'관계와 첫 장면을 골라 주세요.',toggleLabel:'퍼메',languages:true,useRelations:true,resetButton:true,design:{...defaults},images:{header:imageDefault(),background:{...imageDefault(),opacity:25}},relations:[{id:uid(),name:'소꿉친구',description:'오래 알고 지낸 사이',image:buttonImageDefault(),openings:[opening('훈련이 끝난 저녁','훈련장 문이 열리고 야니크가 걸어 나왔다.\n\n“기다렸어? 같이 돌아가자.”'),opening('익숙한 방문','초인종이 울렸다. 문 너머에서 익숙한 목소리가 들렸다.\n\n“나야. 들어가도 돼?”')]},{id:uid(),name:'푹시 / 마스코트',description:'코트 옆에서 마주치는 사이',image:buttonImageDefault(),openings:[opening('경기 시작 전','경기 시작을 알리는 음악 사이로 야니크가 손을 흔들었다.')]},{id:uid(),name:'자유 관계',description:'새로운 관계의 시작',image:buttonImageDefault(),openings:[opening('우연한 만남')]}]};}
-let project=demo(), selected={relation:project.relations[0].id,opening:null},tab='content',preview={relation:null,opening:null,language:'en',closed:false},outputKey='firstMessage';
+function starter(){const p=demo();p.name='새 캐릭터';p.namespace='fm_'+uid();p.title='첫 장면 선택';p.subtitle='';p.relations=[];return p;}
+let project=location.search.includes('demo=1')?demo():starter(), selected={relation:project.relations[0]?.id,opening:null},tab='content',preview={relation:null,opening:null,language:'en',closed:false},outputKey='firstMessage';
 let previewMobile=window.innerWidth<=600;
 try{const mode=localStorage.getItem('misel-first-message-preview');if(mode)previewMobile=mode==='mobile';}catch{}
 function syncPreviewMode(){$('#preview-shell').classList.toggle('mobile',previewMobile);$('#width').textContent=previewMobile?'PC 보기':'모바일 보기';}
@@ -99,7 +100,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
- const lua=[`-- 퍼메 스튜디오 v0.9.3 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+ const lua=[`-- 퍼메 스튜디오 v0.9.4 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
@@ -206,7 +207,7 @@ document.addEventListener('click',async e=>{
  if(b.dataset.theme){const theme=themePresets[b.dataset.theme];if(!theme)return;for(const key of ['bg','text','accent','button','border'])project.design[key]=theme[key];project.design.theme=b.dataset.theme;persist();render();return;}
  if(b.dataset.preview){const a=b.dataset.preview;if(a==='toggle')preview.closed=!preview.closed;if(a==='language')preview.language=b.dataset.id;if(a==='relation'){preview.relation=b.dataset.id;preview.opening=null;}if(a==='opening'){preview.opening=b.dataset.id;preview.relation=project.relations.find(r=>r.openings.some(o=>o.id===b.dataset.id))?.id||null;}if(a==='reset'){preview.relation=null;preview.opening=null;preview.closed=false;}drawPreview();return;}
  if(b.id==='add-relation'){const r={id:uid(),name:'새 관계',description:'',image:buttonImageDefault(),openings:[]};project.relations.push(r);selected={relation:r.id,opening:null};tab='content';persist();render();}
- if(b.id==='new'){if(!confirm('새 프로젝트로 바꿀까요? 저장하지 않은 현재 내용은 브라우저 자동 저장에서 교체돼요.'))return;project=demo();project.name='새 캐릭터';project.namespace='fm_'+uid();project.relations=[];selected={relation:null,opening:null};resetPreview();tab='content';persist();render();}
+ if(b.id==='new'){if(!confirm('새 프로젝트로 바꿀까요? 저장하지 않은 현재 내용은 브라우저 자동 저장에서 교체돼요.'))return;project=starter();selected={relation:null,opening:null};resetPreview();tab='content';persist();render();}
  if(b.id==='save-design'){try{validate(project);localStorage.setItem('misel-first-message-design',JSON.stringify(project.design));status('내 기본 디자인을 저장했어요. 다른 프로젝트에서도 적용할 수 있어요.');}catch(err){status('디자인 저장 실패: '+err.message);}return;}
  if(b.id==='apply-design'){try{const saved=localStorage.getItem('misel-first-message-design');if(!saved){status('저장한 기본 디자인이 없어요. 먼저 내 기본 디자인 저장을 눌러 주세요.');return;}const candidate=JSON.parse(JSON.stringify(project));candidate.design=JSON.parse(saved);validate(candidate);project.design=candidate.design;persist();render();status('내 기본 디자인을 적용했어요.');}catch(err){status('디자인 적용 실패: '+err.message);}return;}
  if(b.id==='save'){try{validate(project);download(safeName()+'.project.json',JSON.stringify(project,null,2),'application/json');status('프로젝트 파일을 저장했어요. 불러오기로 계속 수정할 수 있어요.');}catch(err){status(err.message);}}
@@ -220,4 +221,4 @@ document.addEventListener('click',async e=>{
 $('#file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>10000000)throw Error('프로젝트 파일은 10MB 이내로 골라 주세요.');const next=validate(JSON.parse(await f.text()));if(!confirm('현재 편집 내용을 불러온 프로젝트로 바꿀까요?'))return;project=next;selected={relation:project.relations[0]?.id,opening:null};resetPreview();tab='content';persist();render();status('프로젝트를 불러왔어요. 이어서 수정하세요.');}catch(err){status('불러오기 실패: '+err.message);}finally{e.target.value='';}});
 $('#image-file').addEventListener('change',e=>{const f=e.target.files[0],key=pendingImageKey;if(!f||!key)return;if(!f.type.startsWith('image/')){status('이미지 파일을 골라 주세요.');e.target.value='';return;}if(f.size>20*1024*1024){status('미리보기 이미지는 20MB 이내로 골라 주세요.');e.target.value='';return;}const old=previewImages.get(key);if(old)URL.revokeObjectURL(old);previewImages.set(key,URL.createObjectURL(f));e.target.value='';renderEditor();drawPreview();status('로컬 미리보기를 연결했어요. 리수 에셋 이름도 입력해 주세요.');});
 render();
-window.FirstMessageBuilder={generate,regexSet,validate,demo};
+window.FirstMessageBuilder={generate,regexSet,validate,demo,starter};
