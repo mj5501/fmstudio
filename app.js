@@ -15,7 +15,7 @@ const themePresets={
 const imageDefault=()=>({asset:'',fit:'cover',position:'center',height:180,mobileHeight:120});
 const buttonImageDefault=()=>({asset:'',backgroundAsset:'',backgroundPosition:'center',backgroundShade:35});
 const opening=(title='새 퍼메',body='')=>({id:uid(),title,ko:body,en:'',image:buttonImageDefault()});
-function demo(){return {format:'misel-first-message-project',version:1,name:'야니크 · 선택기 연습',namespace:'fm_jannik',marker:'[ 퍼메 ]',title:'어디서부터 시작할까?',subtitle:'관계와 첫 장면을 골라 주세요.',toggleLabel:'퍼메',languages:true,useRelations:true,resetButton:true,design:{...defaults},images:{header:imageDefault(),background:{...imageDefault(),opacity:25}},relations:[{id:uid(),name:'소꿉친구',description:'오래 알고 지낸 사이',image:buttonImageDefault(),openings:[opening('훈련이 끝난 저녁','훈련장 문이 열리고 야니크가 걸어 나왔다.\n\n“기다렸어? 같이 돌아가자.”'),opening('익숙한 방문','초인종이 울렸다. 문 너머에서 익숙한 목소리가 들렸다.\n\n“나야. 들어가도 돼?”')]},{id:uid(),name:'푹시 / 마스코트',description:'코트 옆에서 마주치는 사이',image:buttonImageDefault(),openings:[opening('경기 시작 전','경기 시작을 알리는 음악 사이로 야니크가 손을 흔들었다.')]},{id:uid(),name:'자유 관계',description:'새로운 관계의 시작',image:buttonImageDefault(),openings:[opening('우연한 만남')]}]};}
+function demo(){return {format:'misel-first-message-project',version:1,name:'야니크 · 선택기 연습',namespace:'fm_jannik',marker:'⪫⩊⪪',title:'어디서부터 시작할까?',subtitle:'관계와 첫 장면을 골라 주세요.',toggleLabel:'퍼메',languages:true,useRelations:true,resetButton:true,design:{...defaults},images:{header:imageDefault(),background:{...imageDefault(),opacity:25}},relations:[{id:uid(),name:'소꿉친구',description:'오래 알고 지낸 사이',image:buttonImageDefault(),openings:[opening('훈련이 끝난 저녁','훈련장 문이 열리고 야니크가 걸어 나왔다.\n\n“기다렸어? 같이 돌아가자.”'),opening('익숙한 방문','초인종이 울렸다. 문 너머에서 익숙한 목소리가 들렸다.\n\n“나야. 들어가도 돼?”')]},{id:uid(),name:'푹시 / 마스코트',description:'코트 옆에서 마주치는 사이',image:buttonImageDefault(),openings:[opening('경기 시작 전','경기 시작을 알리는 음악 사이로 야니크가 손을 흔들었다.')]},{id:uid(),name:'자유 관계',description:'새로운 관계의 시작',image:buttonImageDefault(),openings:[opening('우연한 만남')]}]};}
 function starter(){const p=demo();p.name='새 캐릭터';p.namespace='fm_'+uid();p.title='첫 장면 선택';p.subtitle='';p.relations=[];return p;}
 let project=location.search.includes('demo=1')?demo():starter(), selected={relation:project.relations[0]?.id,opening:null},tab='content',preview={relation:null,opening:null,language:'en',closed:false},outputKey='firstMessage';
 let previewMobile=window.innerWidth<=600;
@@ -64,7 +64,7 @@ function renderEditor(){
  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
  if(tab==='content'){
  const r=rel(),o=op();
- const basic=field('프로젝트 이름','name',project.name)+`<div class="grid2">${field('호출 문구','marker',project.marker)}${field('변수 접두사','namespace',project.namespace)}</div><p class="hint">호출 문구는 첫 메시지에 넣을 표시예요. 변수 접두사는 다른 선택기와 겹치지 않게 정하세요.</p>`;
+ const basic=field('프로젝트 이름','name',project.name)+`<div class="grid2">${field('호출 문구','marker',project.marker)}${field('변수 접두사','namespace',project.namespace)}</div><p class="hint">정규식이 선택기 위치를 찾는 문구예요. 본문과 겹치지 않는 특수문자 조합을 권장해요. 예: <code>⪫⩊⪪</code><br>변수 접두사는 다른 선택기와 겹치지 않게 정하세요.</p>`;
  const item=r?(o?field('버튼에 표시할 제목','o.title',o.title)+buttonImageCard('퍼메 버튼 이미지','o.image',o.image)+field('첫 메시지 본문 · 한국어 / 기본','o.ko',o.ko,'textarea','placeholder="여기에 첫 메시지를 적어 주세요."')+(project.languages?field('영어 본문 · 비워 두면 기본 본문 사용','o.en',o.en,'textarea','placeholder="비워 두면 한국어 / 기본 본문을 사용해요."'):'')+'<p class="hint">본문의 {{user}}, {{char}} 같은 CBS와 마크다운은 내보낼 때 그대로 보존돼요.</p>':field('관계 이름','r.name',r.name)+buttonImageCard('관계 버튼 이미지','r.image',r.image)+field('관계 설명','r.description',r.description,'textarea'))+`<div class="actions"><button data-item="up">↑ 위로</button><button data-item="down">↓ 아래로</button><button data-item="duplicate">복제</button><button data-item="delete" class="danger">삭제</button></div>`:'<p class="empty">왼쪽에서 관계를 추가하세요.</p>';
  $('#editor').innerHTML=fold('content-basic','프로젝트 기본 설정',basic,false)+fold('content-item',o?'선택한 퍼메 편집':r?'선택한 관계 편집':'관계·퍼메 편집',item,true);
  }else if(tab==='design'){
@@ -100,7 +100,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
- const lua=[`-- 퍼메 스튜디오 v0.9.4 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+ const lua=[`-- 퍼메 스튜디오 v0.9.5 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
