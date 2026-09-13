@@ -65,7 +65,8 @@ function renderEditor(){
  if(tab==='content'){
  const r=rel(),o=op();
  const basic=field('프로젝트 이름','name',project.name)+`<div class="grid2">${field('호출 문구','marker',project.marker)}${field('변수 접두사','namespace',project.namespace)}</div><p class="hint">정규식이 선택기 위치를 찾는 문구예요. 본문과 겹치지 않는 특수문자 조합을 권장해요. 예: <code>⪫⩊⪪</code><br>변수 접두사는 다른 선택기와 겹치지 않게 정하세요.</p>`;
- const item=r?(o?field('버튼에 표시할 제목','o.title',o.title)+buttonImageCard('퍼메 버튼 이미지','o.image',o.image)+field('첫 메시지 본문 · 한국어 / 기본','o.ko',o.ko,'textarea','placeholder="여기에 첫 메시지를 적어 주세요."')+(project.languages?field('영어 본문 · 비워 두면 기본 본문 사용','o.en',o.en,'textarea','placeholder="비워 두면 한국어 / 기본 본문을 사용해요."'):'')+'<p class="hint">본문의 {{user}}, {{char}} 같은 CBS와 마크다운은 내보낼 때 그대로 보존돼요.</p>':field('관계 이름','r.name',r.name)+buttonImageCard('관계 버튼 이미지','r.image',r.image)+field('관계 설명','r.description',r.description,'textarea'))+`<div class="actions"><button data-item="up">↑ 위로</button><button data-item="down">↓ 아래로</button><button data-item="duplicate">복제</button><button data-item="delete" class="danger">삭제</button></div>`:'<p class="empty">왼쪽에서 관계를 추가하세요.</p>';
+ const bodyFields=project.languages?field('첫 메시지 본문 · 한국어','o.ko',o?.ko||'','textarea','placeholder="한국어 첫 메시지를 적어 주세요."')+field('첫 메시지 본문 · 영어','o.en',o?.en||'','textarea','placeholder="영어 첫 메시지를 적어 주세요."')+'<p class="hint">영어 본문이 비어 있으면 한국어 본문을 사용해요. 한 언어만 사용한다면 디자인 → 문구 · 기능에서 언어 선택 버튼을 끄세요.</p>':field('첫 메시지 본문','o.ko',o?.ko||'','textarea','placeholder="여기에 첫 메시지를 적어 주세요."')+'<p class="hint">한국어·영어 구분 없이 사용할 본문을 입력하세요.</p>';
+ const item=r?(o?field('버튼에 표시할 제목','o.title',o.title)+buttonImageCard('퍼메 버튼 이미지','o.image',o.image)+bodyFields+'<p class="hint">본문의 {{user}}, {{char}} 같은 CBS와 마크다운은 내보낼 때 그대로 보존돼요.</p>':field('관계 이름','r.name',r.name)+buttonImageCard('관계 버튼 이미지','r.image',r.image)+field('관계 설명','r.description',r.description,'textarea'))+`<div class="actions"><button data-item="up">↑ 위로</button><button data-item="down">↓ 아래로</button><button data-item="duplicate">복제</button><button data-item="delete" class="danger">삭제</button></div>`:'<p class="empty">왼쪽에서 관계를 추가하세요.</p>';
  $('#editor').innerHTML=fold('content-basic','프로젝트 기본 설정',basic,false)+fold('content-item',o?'선택한 퍼메 편집':r?'선택한 관계 편집':'관계·퍼메 편집',item,true);
  }else if(tab==='design'){
  const themes=`<div class="theme-grid">${Object.entries(themePresets).map(([id,t])=>`<button data-theme="${id}"><span>${t.label}</span><i style="--t-bg:${t.button};--t-accent:${t.accent};--t-border:${t.border}"></i></button>`).join('')}</div>`;
@@ -100,7 +101,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
- const lua=[`-- 퍼메 스튜디오 v0.9.6 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+ const lua=[`-- 퍼메 스튜디오 v0.9.7 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
@@ -183,8 +184,9 @@ document.addEventListener('input',e=>{
  const el=e.target,path=el.dataset.path;if(!path)return;
  let target=project,parts=path.split('.');if(parts[0]==='r'){target=rel();parts.shift();}else if(parts[0]==='o'){target=op();parts.shift();}
  if(!target)return;while(parts.length>1){target=target[parts.shift()];if(!target)return;}target[parts[0]]=el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value;
+ if(path==='languages'&&!project.languages)for(const r of project.relations)for(const o of r.openings)if(!o.ko&&o.en)o.ko=o.en;
  if(el.type==='color'){project.design.theme='custom';document.querySelectorAll('[data-theme]').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});}
- persist();tree();try{validate(project);drawPreview();}catch{}
+ persist();tree();if(path==='languages')renderEditor();try{validate(project);drawPreview();}catch{}
 });
 document.addEventListener('change',e=>{if(e.target.id==='output-kind'){outputKey=e.target.value;renderExport();}});
 document.addEventListener('toggle',e=>{if(e.target.matches?.('[data-fold]'))foldState.set(e.target.dataset.fold,e.target.open);},true);
