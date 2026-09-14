@@ -3,9 +3,9 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labelEsc=s=>esc(s).replace(/\{/g,'&#123;').replace(/\}/g,'&#125;').replace(/\$/g,'&#36;');
 const uid=()=> 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-const defaults={bg:'#1a2e1a',text:'#eef7ee',accent:'#4ade80',activeText:'#1a2e1a',button:'#233023',border:'#4f624f',radius:16,columns:2,fontSize:14,padding:20,maxWidth:760,mobileColumns:2,mobileFontSize:14,mobilePadding:14,theme:'forest',textAlign:'left',buttonAlign:'left',buttonTextAlign:'center'};
+const defaults={bg:'#f6f7f8',text:'#272b31',accent:'#4b5563',activeText:'#ffffff',button:'#ffffff',border:'#d5d9df',radius:16,columns:2,fontSize:14,padding:20,maxWidth:760,mobileColumns:2,mobileFontSize:14,mobilePadding:14,theme:'clean',textAlign:'left',buttonAlign:'left',buttonTextAlign:'center'};
 const themePresets={
- auto:{label:'🔄 Auto',bg:'#282a36',text:'#f8f8f2',button:'#21222c',accent:'#6272a4',border:'#67686f'},dark:{label:'🌙 Dark',bg:'#1e1e24',text:'#f4f4f5',button:'#121214',accent:'#60a5fa',border:'#54555b'},light:{label:'☀️ Light',bg:'#e8e6e1',text:'#28303d',button:'#f0ede6',accent:'#2563eb',border:'#b3b4b6'},
+ clean:{label:'✨ Clean',bg:'#f6f7f8',text:'#272b31',button:'#ffffff',accent:'#4b5563',activeText:'#ffffff',border:'#d5d9df'},auto:{label:'🔄 Auto',bg:'#282a36',text:'#f8f8f2',button:'#21222c',accent:'#6272a4',border:'#67686f'},dark:{label:'🌙 Dark',bg:'#1e1e24',text:'#f4f4f5',button:'#121214',accent:'#60a5fa',border:'#54555b'},light:{label:'☀️ Light',bg:'#e8e6e1',text:'#28303d',button:'#f0ede6',accent:'#2563eb',border:'#b3b4b6'},
  midnight:{label:'🖤 Midnight',bg:'#000000',text:'#f5f5f5',button:'#0d0d0d',accent:'#60a5fa',border:'#454647'},cream:{label:'🍪 Cream',bg:'#ede8db',text:'#403b31',button:'#f7f3e8',accent:'#b45309',border:'#b8b3a5'},nord:{label:'❄️ Nord',bg:'#2e3440',text:'#eceff4',button:'#3b4252',accent:'#88c0d0',border:'#616773'},
  solarized:{label:'☕ Solarized',bg:'#002b36',text:'#eee8d5',button:'#073642',accent:'#268bd2',border:'#284b53'},rose:{label:'🌸 Rose',bg:'#f2e4e8',text:'#402d35',button:'#f9f0f3',accent:'#db2777',border:'#bbaab1'},mint:{label:'🌿 Mint',bg:'#ddf0e8',text:'#263a32',button:'#ecf7f1',accent:'#059669',border:'#a2b7ae'},
  sky:{label:'💙 Sky',bg:'#dce8f5',text:'#253646',button:'#eaf1fa',accent:'#0284c7',border:'#a1afbd'},lavender:{label:'💐 Lavender',bg:'#e8e0f2',text:'#382e47',button:'#f2ecfa',accent:'#7c3aed',border:'#b0a6bb'},peach:{label:'🍑 Peach',bg:'#f2e4d8',text:'#48362b',button:'#faf0e8',accent:'#ea580c',border:'#bbad9f'},
@@ -105,7 +105,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=p.useCollapse?`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`:`<style>${styles(p)}</style><div class="${n}" style="--fm-background:${bg}">${inner}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
- const lua=[`-- 퍼메 스튜디오 v0.10.1 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+ const lua=[`-- 퍼메 스튜디오 v0.10.2 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  if(p.useCollapse)func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
