@@ -124,7 +124,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=p.useCollapse?`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`:`<style>${styles(p)}</style><div class="${n}" style="--fm-background:${bg}">${inner}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
-	const lua=[`-- 퍼메 스튜디오 v0.12.2 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+	const lua=[`-- 퍼메 스튜디오 v0.12.3 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  if(p.useCollapse)func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
