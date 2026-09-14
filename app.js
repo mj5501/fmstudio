@@ -36,17 +36,21 @@ function validate(p){
  if(!p.images)p.images={header:imageDefault(),background:{...imageDefault(),opacity:25}};
  for(const k of ['header','background']){if(!p.images[k])p.images[k]=k==='background'?{...imageDefault(),opacity:25}:imageDefault();const x=p.images[k];if(typeof x.asset!=='string'||x.asset.length>200||/[{}<>"'\r\n]/.test(x.asset)||!['cover','contain'].includes(x.fit)||!['top','center','bottom'].includes(x.position)||!Number.isInteger(x.height)||x.height<40||x.height>600||!Number.isInteger(x.mobileHeight)||x.mobileHeight<40||x.mobileHeight>600)throw Error('이미지 설정을 확인해 주세요.');}
  if(p.images.background.opacity===undefined)p.images.background.opacity=25;if(!Number.isInteger(p.images.background.opacity)||p.images.background.opacity<0||p.images.background.opacity>100)throw Error('배경 투명도를 확인해 주세요.');
- for(const k of ['mobileColumns','mobileFontSize','mobilePadding','maxWidth'])if(p.design[k]===undefined)p.design[k]=defaults[k];
- const oldButtonWidth=p.design.buttonMaxWidth;
- for(const k of ['relationButtonMaxWidth','openingButtonMaxWidth'])if(p.design[k]===undefined)p.design[k]=oldButtonWidth??defaults[k];
+	for(const k of ['mobileColumns','mobileFontSize','mobilePadding','maxWidth'])if(p.design[k]===undefined)p.design[k]=defaults[k];
+	for(const k of ['textAlign','buttonAlign','buttonTextAlign'])if(p.design[k]===undefined)p.design[k]=defaults[k];
+	const oldButtonWidth=p.design.buttonMaxWidth;
+	for(const k of ['relationButtonMaxWidth','openingButtonMaxWidth'])if(p.design[k]===undefined)p.design[k]=oldButtonWidth??defaults[k];
 	for(const k of ['relationButtonHeight','openingButtonHeight'])if(p.design[k]===undefined)p.design[k]=defaults[k];
+	const needsLayoutMigration=p.design.buttonLayoutVersion===undefined,layoutLooksDefault=['relation','opening'].every(kind=>p.design[kind+'ImagePlacement']===undefined||(p.design[kind+'ImagePlacement']===defaults[kind+'ImagePlacement']&&p.design[kind+'ImageWidth']===defaults[kind+'ImageWidth']&&p.design[kind+'ImageHeight']===defaults[kind+'ImageHeight']&&p.design[kind+'ImagePositionX']===defaults[kind+'ImagePositionX']&&p.design[kind+'ImagePositionY']===defaults[kind+'ImagePositionY']&&p.design[kind+'ContentX']===defaults[kind+'ContentX']&&p.design[kind+'ContentY']===defaults[kind+'ContentY']));
 	const firstRelationImage=p.relations?.find(r=>r.image)?.image,firstOpeningImage=p.relations?.flatMap(r=>r.openings||[]).find(o=>o.image)?.image;
 	for(const [kind,source] of [['relation',firstRelationImage],['opening',firstOpeningImage]]){for(const key of ['ImagePlacement','ImageWidth','ImageHeight','ContentY'])if(p.design[kind+key]===undefined)p.design[kind+key]=defaults[kind+key];if(p.design[kind+'ImagePositionX']===undefined)p.design[kind+'ImagePositionX']=source?.topPositionX??50;if(p.design[kind+'ImagePositionY']===undefined)p.design[kind+'ImagePositionY']=source?.topPositionY??50;if(p.design[kind+'ContentX']===undefined)p.design[kind+'ContentX']=p.design.buttonTextAlign||'center';}
+	if(needsLayoutMigration){if(layoutLooksDefault)for(const kind of ['relation','opening'])p.design[kind+'ContentX']=p.design.buttonTextAlign;p.design.buttonLayoutVersion=1;}
+	if(p.design.buttonLayoutVersion!==1)throw Error('버튼 내부 배치 버전을 확인해 주세요.');
  if(p.design.activeText===undefined)p.design.activeText=p.design.bg;
  if(p.design.theme===undefined)p.design.theme=({'#173e32':'forest','#fff9ed':'paper','#242537':'night'})[p.design.bg]||'custom';
  if(p.design.theme==='paper')p.design.theme='cream';if(p.design.theme==='night')p.design.theme='dark';
  if(![...Object.keys(themePresets),'custom'].includes(p.design.theme))throw Error('테마 설정을 확인해 주세요.');
-	for(const k of ['textAlign','buttonAlign','buttonTextAlign']){if(p.design[k]===undefined)p.design[k]=defaults[k];if(!['left','center','right'].includes(p.design[k]))throw Error('정렬 설정을 확인해 주세요.');}
+	for(const k of ['textAlign','buttonAlign','buttonTextAlign'])if(!['left','center','right'].includes(p.design[k]))throw Error('정렬 설정을 확인해 주세요.');
 	for(const k of ['relationImagePlacement','openingImagePlacement'])if(!['top','bottom','left','right'].includes(p.design[k]))throw Error('버튼 이미지 배치를 확인해 주세요.');
 	for(const k of ['relationContentX','openingContentX'])if(!['left','center','right'].includes(p.design[k]))throw Error('버튼 내용 가로 위치를 확인해 주세요.');
 	for(const k of ['relationContentY','openingContentY'])if(!['top','center','bottom'].includes(p.design[k]))throw Error('버튼 내용 세로 위치를 확인해 주세요.');
@@ -85,7 +89,7 @@ function renderEditor(){
  $('#editor').innerHTML=fold('content-basic','프로젝트 기본 설정',basic,false)+fold('content-item',o?'선택한 퍼메 편집':r?'선택한 관계 편집':'관계·퍼메 편집',item,true);
  }else if(tab==='design'){
  const themes=`<div class="theme-grid">${Object.entries(themePresets).map(([id,t])=>`<button data-theme="${id}"><span>${t.label}</span><i style="--t-bg:${t.button};--t-accent:${t.accent};--t-border:${t.border}"></i></button>`).join('')}</div>`;
-	const alignment=`${[['textAlign','제목 · 안내문 정렬'],['buttonAlign','버튼 묶음 정렬'],['buttonTextAlign','버튼 안 글자 정렬']].map(([key,label])=>`<div class="field"><span>${label}</span><div class="align-options">${[['left','왼쪽'],['center','가운데'],['right','오른쪽']].map(([value,text])=>`<button data-align="${key}" data-value="${value}" aria-pressed="${project.design[key]===value}" class="${project.design[key]===value?'active':''}">${text}</button>`).join('')}</div></div>`).join('')}<p class="hint">버튼 순서는 오른쪽 미리보기에서 끌어서 바꿀 수 있어요.</p>`;
+	const alignment=`${[['textAlign','제목 · 안내문 정렬'],['buttonAlign','버튼 묶음 정렬']].map(([key,label])=>`<div class="field"><span>${label}</span><div class="align-options">${[['left','왼쪽'],['center','가운데'],['right','오른쪽']].map(([value,text])=>`<button data-align="${key}" data-value="${value}" aria-pressed="${project.design[key]===value}" class="${project.design[key]===value?'active':''}">${text}</button>`).join('')}</div></div>`).join('')}<p class="hint">관계·퍼메 버튼 안 글씨 위치는 버튼 내부 이미지·글씨 배치에서 각각 설정해요. 버튼 순서는 오른쪽 미리보기에서 끌어서 바꿀 수 있어요.</p>`;
 	const choices=(key,label,items)=>`<div class="field"><span>${label}</span><div class="align-options">${items.map(([value,text])=>`<button data-align="${key}" data-value="${value}" aria-pressed="${project.design[key]===value}" class="${project.design[key]===value?'active':''}">${text}</button>`).join('')}</div></div>`;
 	const layoutCard=(kind,label)=>`<div class="image-card"><h3>${label}</h3>${choices(kind+'ImagePlacement','이미지를 글씨의 어느 쪽에 놓을까요?',[['top','위'],['bottom','아래'],['left','왼쪽'],['right','오른쪽']])}<div class="grid2">${rangeField('이미지 가로 크기','design.'+kind+'ImageWidth',project.design[kind+'ImageWidth'],10,100)}${rangeField('이미지 세로 크기','design.'+kind+'ImageHeight',project.design[kind+'ImageHeight'],20,240,'px')}</div><div class="grid2">${rangeField('이미지 가로 초점','design.'+kind+'ImagePositionX',project.design[kind+'ImagePositionX'],0,100)}${rangeField('이미지 세로 초점','design.'+kind+'ImagePositionY',project.design[kind+'ImagePositionY'],0,100)}</div>${choices(kind+'ContentX','이미지·글씨 가로 위치',[['left','왼쪽'],['center','가운데'],['right','오른쪽']])}${choices(kind+'ContentY','이미지·글씨 세로 위치',[['top','위'],['center','가운데'],['bottom','아래']])}</div>`;
 	const buttonLayout=layoutCard('relation','관계 버튼 내부 배치')+layoutCard('opening','퍼메 버튼 내부 배치')+'<p class="hint">이 설정은 같은 종류의 모든 버튼이 공유해요. 배경 이미지는 각 항목의 버튼 이미지 설정에서 초점을 따로 맞출 수 있어요.</p>';
@@ -120,7 +124,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=p.useCollapse?`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`:`<style>${styles(p)}</style><div class="${n}" style="--fm-background:${bg}">${inner}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
-	const lua=[`-- 퍼메 스튜디오 v0.12.0 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+	const lua=[`-- 퍼메 스튜디오 v0.12.1 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  if(p.useCollapse)func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
