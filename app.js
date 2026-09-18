@@ -126,7 +126,7 @@ function generate(p){
  const bg=p.images.background.asset?`url('{{raw::${p.images.background.asset}}}')`:'none';
  const html=p.useCollapse?`<style>${styles(p)}</style><div class="${n} ${when(key('closed'),'1','fm-closed')}" style="--fm-background:${bg}"><div class="fm-toggle-row">${button('toggle',p.toggleLabel)}</div>${whenNot(key('closed'),'1',inner)}</div>`:`<style>${styles(p)}</style><div class="${n}" style="--fm-background:${bg}">${inner}</div>`;
  let body='';for(const r of p.relations)for(const o of r.openings){const text=p.languages?when(key('language'),'ko',o.ko)+whenNot(key('language'),'ko',o.en||o.ko):o.ko;body+=when(key('relation'),r.id,when(key('opening'),o.id,text))+'\n';}
-	const lua=[`-- 퍼메 스튜디오 v0.12.4 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
+	const lua=[`-- 퍼메 스튜디오 v0.12.5 | ${n}\n-- 이 선택기의 함수만 갱신하세요.\n`];
  const func=(name,lines)=>lua.push(`function ${fn(name)}(triggerId)\n${lines.map(s=>'    '+s).join('\n')}\n    reloadDisplay(triggerId)\nend\n`);
  const set=(k,v)=>`setChatVar(triggerId, "${key(k)}", "${v}")`;
  if(p.useCollapse)func('toggle',[`if getChatVar(triggerId, "${key('closed')}") == "1" then`, '    '+set('closed','0'),'else','    '+set('closed','1'),'end']);
@@ -234,7 +234,20 @@ document.addEventListener('click',async e=>{
  if(action==='down'&&i<list.length-1)[list[i+1],list[i]]=[list[i],list[i+1]];
  resetPreview();persist();render();return;}
  if(b.dataset.theme){const theme=themePresets[b.dataset.theme];if(!theme)return;for(const key of ['bg','text','accent','button','border'])project.design[key]=theme[key];project.design.activeText=theme.activeText||theme.bg;project.design.theme=b.dataset.theme;persist();render();return;}
- if(b.dataset.preview){const a=b.dataset.preview;if(a==='toggle')preview.closed=!preview.closed;if(a==='language')preview.language=b.dataset.id;if(a==='relation'){preview.relation=b.dataset.id;preview.opening=null;}if(a==='opening'){preview.opening=b.dataset.id;preview.relation=project.relations.find(r=>r.openings.some(o=>o.id===b.dataset.id))?.id||null;}if(a==='reset'){preview.relation=null;preview.opening=null;preview.closed=false;}drawPreview();return;}
+ if(b.dataset.preview){
+  const a=b.dataset.preview;
+  if(a==='toggle')preview.closed=!preview.closed;
+  if(a==='language')preview.language=b.dataset.id;
+  if(a==='relation'){preview.relation=b.dataset.id;preview.opening=null;}
+  if(a==='opening'){preview.opening=b.dataset.id;preview.relation=project.relations.find(r=>r.openings.some(o=>o.id===b.dataset.id))?.id||null;}
+  if(a==='relation'||a==='opening'){
+   selected={relation:preview.relation,opening:preview.opening};
+   tab='content';foldState.set('content-item',true);collapsedRelations.delete(selected.relation);
+   tree();renderEditor();
+  }
+  if(a==='reset'){preview.relation=null;preview.opening=null;preview.closed=false;}
+  drawPreview();return;
+ }
  if(b.id==='add-relation'){const r={id:uid(),name:'새 관계',description:'',image:buttonImageDefault(),openings:[]};project.relations.push(r);selected={relation:r.id,opening:null};tab='content';persist();render();}
  if(b.id==='new'){if(!confirm('새 프로젝트로 바꿀까요? 저장하지 않은 현재 내용은 브라우저 자동 저장에서 교체돼요.'))return;project=starter();selected={relation:null,opening:null};resetPreview();tab='content';persist();render();}
  if(b.id==='save-design'){try{validate(project);localStorage.setItem('misel-first-message-design',JSON.stringify(project.design));status('내 기본 디자인을 저장했어요. 다른 프로젝트에서도 적용할 수 있어요.');}catch(err){status('디자인 저장 실패: '+err.message);}return;}
